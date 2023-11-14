@@ -331,7 +331,7 @@ avg_plate_fig
 ```{r}
 #seasonality - need a DF that breaks dates into seasons (should have spring, summer, fall and winter, but spring/winter will only have one month each (May and December)).
 
-
+#alyssa checking to see if this works
 
 ```
 
