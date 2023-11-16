@@ -340,3 +340,31 @@ avg_plate_fig
 
 ```
 
+```{r}
+#make_plot_df$Julian <- format(make_plot_df$real_dates, "%j")
+
+plot(num_col_abund2[,4]~as.factor(make_plot_df$real_dates))
+
+all_colors_df$Julian <- format(all_colors_df$Date, "%j")
+
+all_colors_df$Julian <- as.numeric(all_colors_df$Julian)
+
+
+#convert julian column to either numeric or factor, square the column, quadratic regression with each color throughout time
+
+library(ggpubr)
+
+all_colors_df %>% 
+  ggplot(aes(x=Julian,y=value)) +
+    geom_smooth(method = "lm", 
+                formula = y ~ poly(x, 2)) +
+    geom_point(alpha = 0.05) +
+    stat_cor() +
+    theme_classic() +
+    facet_wrap(name ~.)
+
+quadratic_model <- lm(value ~ poly(Julian, 2), data = all_colors_df)
+summary(quadratic_model)
+
+```
+
