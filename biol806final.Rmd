@@ -54,7 +54,7 @@ make_plot_df <- Plate_Count %>%
 #making a list of color names by grabbing unique values in columns 5, 7, 9, and 11
 colornames <- unique(unlist(make_plot_df[,c(5,7,9,11)])) 
 
-#creating empty vector that will have columns equal to the length of color names and rows equal to the number of rows in make_plot_df
+#creating empty matrix that will have columns equal to the length of color names and rows equal to the number of rows in make_plot_df
 num_col_abund <- matrix(nrow=nrow(make_plot_df),ncol=length(colornames))
 
 #For loop going through the list of colors: For each color, check the "microbe 1" column (row by row). If the color that is being indexed is present in the row, go to the next column to report the percent coverage. If it is not present in that row, report a zero. Repeats for all "microbe color" columns (5, 7, 9, and 11).
@@ -333,5 +333,10 @@ avg_plate_fig
 
 #alyssa checking to see if this works
 #ciana checking
+
+# have date as a numeric value in some way that makes sense, linear model for each color, fit a quadratic line
+# lm(percentBeige ~ time + I(time^2))
+# lmer(percentBeige ~ time + timesquared + 1|site + timesquared|site)
+
 ```
 
