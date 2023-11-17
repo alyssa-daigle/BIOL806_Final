@@ -217,15 +217,15 @@ location_microbe %>%
 ```{r sample count table}
 
 #maybe can use as a figure to show the variance in sample sizes
-library(knitr)
-library(kableExtra)
-sample_numbers <- make_plot_df %>% 
-  group_by(Location) %>% 
-  summarise(Samples = n())
-
-sample_table <- kable(sample_numbers, format = "html", caption = "Number of Samples")
-
-print(sample_table)
+# library(knitr)
+# library(kableExtra)
+# sample_numbers <- make_plot_df %>% 
+#   group_by(Location) %>% 
+#   summarise(Samples = n())
+# 
+# sample_table <- kable(sample_numbers, format = "html", caption = "Number of Samples")
+# 
+# print(sample_table)
 ```
 
 ```{r stacked bar graphs to show proportion and avg comp per plate}
@@ -340,7 +340,7 @@ avg_plate_fig
 
 ```
 
-```{r}
+```{r quadratic regression}
 #make_plot_df$Julian <- format(make_plot_df$real_dates, "%j")
 
 #plot(num_col_abund2[,4]~as.factor(make_plot_df$real_dates))
@@ -360,6 +360,7 @@ all_colors_df %>%
               formula = y ~ poly(x, 2),
               aes(color = name)) +
   theme_classic() +
+  scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 25)) +
   scale_color_manual(values = c(
     amber = "goldenrod",
     beige = "beige",
@@ -375,7 +376,7 @@ all_colors_df %>%
     yellow = "yellow")) +
   geom_point(alpha = 0.05) +
   stat_cor(size=2.75) +
-  labs(x = "Time (Julian Days)", 
+  labs(x = "Julian Day (2022)", 
        y = "Percent Abundance") +
   theme(axis.text = element_text(size = 8),
         plot.title = element_text(size = 10, face = "bold"),
@@ -401,4 +402,46 @@ summary(quadratic_model)
 
 ```
 
+
+```{r testing a second option for the first line plot, easier code}
+library(ggplot2)
+
+all_colors_df %>%
+  ggplot(aes(x = Julian, 
+             y = value, 
+             color = name, 
+             linetype = Side)) +
+  geom_line(size = 0.5) +
+  labs(color = "Microbe Color",
+       x = "Julian Day (2022)",
+       y = "Percent Coverage") +
+  scale_color_manual(values = c(
+    "amber" = "goldenrod",
+    "black" = "black",
+    "yellow" = "yellow",
+    "orange" = "darkorange1",
+    "beige" = "wheat2",
+    "magenta" = "magenta",
+    "gray" = "gray40",
+    "green" = "green3",
+    "brown" = "saddlebrown",
+    "pink" = "pink",
+    "red" = "red",
+    "purple" = "purple"
+  )) +
+  scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 25)) +
+  theme_classic() +
+  theme(axis.text = element_text(size = 8),
+        plot.title = element_text(size = 8, face = "bold"),
+        strip.text = element_text(size = 9, face = "bold")) +
+  facet_wrap(~Location, 
+             labeller = labeller(Location = c(
+          durham_reservoir = "Durham Reservoir",
+          laroche_pond = "LaRoche Pond",
+          mill_pond = "Mill Pond",
+          thompson_farm = "Thompson Farm",
+          upper_mill_pond = "Upper Mill Pond",
+          woodman_rd = "Woodman Rd")))
+
+```
 
