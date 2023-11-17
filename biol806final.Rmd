@@ -343,7 +343,7 @@ avg_plate_fig
 ```{r}
 #make_plot_df$Julian <- format(make_plot_df$real_dates, "%j")
 
-plot(num_col_abund2[,4]~as.factor(make_plot_df$real_dates))
+#plot(num_col_abund2[,4]~as.factor(make_plot_df$real_dates))
 
 all_colors_df$Julian <- format(all_colors_df$Date, "%j")
 
@@ -356,15 +356,49 @@ library(ggpubr)
 
 all_colors_df %>% 
   ggplot(aes(x=Julian,y=value)) +
-    geom_smooth(method = "lm", 
-                formula = y ~ poly(x, 2)) +
-    geom_point(alpha = 0.05) +
-    stat_cor() +
-    theme_classic() +
-    facet_wrap(name ~.)
+  geom_smooth(method = "lm", 
+              formula = y ~ poly(x, 2),
+              aes(color = name)) +
+  theme_classic() +
+  scale_color_manual(values = c(
+    amber = "goldenrod",
+    beige = "beige",
+    black = "black",
+    brown = "saddlebrown",
+    gray = "gray40",
+    green = "green",
+    magenta = "magenta",
+    orange = "darkorange1",
+    pink = "pink",
+    purple = "purple",
+    red = "red",
+    yellow = "yellow")) +
+  geom_point(alpha = 0.05) +
+  stat_cor(size=2.75) +
+  labs(x = "Time (Julian Days)", 
+       y = "Percent Abundance") +
+  theme(axis.text = element_text(size = 8),
+        plot.title = element_text(size = 10, face = "bold"),
+        strip.text = element_text(size = 10, face = "bold"),
+        legend.position = "none") +
+  facet_wrap(name ~., 
+             labeller = labeller(name = c(
+              amber = "Amber",
+              beige = "Beige",
+              black = "Black",
+              brown = "Brown",
+              gray = "Gray",
+              green = "Green",
+              magenta = "Magenta",
+              orange = "Orange",
+              pink = "Pink",
+              purple = "Purple",
+              red = "Red",
+              yellow = "Yellow")))
 
 quadratic_model <- lm(value ~ poly(Julian, 2), data = all_colors_df)
 summary(quadratic_model)
 
 ```
+
 
