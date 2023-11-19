@@ -444,4 +444,61 @@ all_colors_df %>%
           woodman_rd = "Woodman Rd")))
 
 ```
+```{r sampling locations map}
+library(leaflet)
+#install.packages("mapview")
+library(mapview)
 
+#making custom df
+locations <- c("Durham Reservoir",
+               "LaRoche Pond",
+               "Mill Pond",
+               "Thompson Farm",
+               "Upper Mill Pond",
+               "Woodman Rd") 
+
+longitude <- c(-70.94412859656731,
+               -70.94562421030663,
+               -70.92152623,
+               -70.94553034136233,
+               -70.92529325317224,
+               -70.91917424282973)
+latitude <- c(43.147559724237034,
+              43.120993650017304,
+              43.130809896234574,
+              43.10826058413447,
+              43.12248009213886,
+              43.1373552934115)
+
+sampling_locations <- data.frame(Location = locations, 
+                                 long = longitude, 
+                                 lat = latitude)
+
+color_list <- c("blue", "red", "yellow", "purple", "green", "orange")
+
+location_list <- c("Durham Reservoir", 
+                   "LaRoche Pond", 
+                   "Mill Pond", 
+                   "Thompson Farm", 
+                   "Upper Mill Pond",
+                   "Woodman Rd") 
+
+sampling_map <- leaflet(data = sampling_locations) %>%
+    addTiles() %>%
+    addCircleMarkers(lng = ~long, 
+                     lat = ~lat, 
+                     color = color_list, 
+                     opacity = 4) %>% 
+    addScaleBar(sampling_locations, 
+                position = "bottomleft") %>% 
+    addLegend("bottomright", 
+              colors = color_list, 
+              labels = location_list,
+              opacity = 1, 
+              title = "Sampling Locations")
+sampling_map
+
+#saving leaflet as a png file
+mapshot(sampling_map, file = "sampling_locations.png")
+
+```
