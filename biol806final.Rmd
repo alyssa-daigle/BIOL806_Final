@@ -328,18 +328,6 @@ avg_plate_fig
 
 ```
 
-```{r}
-#seasonality - need a DF that breaks dates into seasons (should have spring, summer, fall and winter, but spring/winter will only have one month each (May and December)).
-
-#alyssa checking to see if this works
-#ciana checking
-
-# have date as a numeric value in some way that makes sense, linear model for each color, fit a quadratic line
-# lm(percentBeige ~ time + I(time^2))
-# lmer(percentBeige ~ time + timesquared + 1|site + timesquared|site)
-
-```
-
 ```{r quadratic regression}
 #make_plot_df$Julian <- format(make_plot_df$real_dates, "%j")
 
@@ -476,13 +464,6 @@ sampling_locations <- data.frame(Location = locations,
 
 color_list <- c("blue", "red", "yellow", "purple", "green", "orange")
 
-location_list <- c("Durham Reservoir", 
-                   "LaRoche Pond", 
-                   "Mill Pond", 
-                   "Thompson Farm", 
-                   "Upper Mill Pond",
-                   "Woodman Rd") 
-
 sampling_map <- leaflet(data = sampling_locations) %>%
     addTiles() %>%
     addCircleMarkers(lng = ~long, 
@@ -493,12 +474,13 @@ sampling_map <- leaflet(data = sampling_locations) %>%
                 position = "bottomleft") %>% 
     addLegend("bottomright", 
               colors = color_list, 
-              labels = location_list,
+              labels = locations,
               opacity = 1, 
               title = "Sampling Locations")
+   
 sampling_map
 
 #saving leaflet as a png file
-mapshot(sampling_map, file = "sampling_locations.png")
+mapshot(sampling_map, file = "sampling_locations.png", remove_controls = "zoomControl")
 
 ```
