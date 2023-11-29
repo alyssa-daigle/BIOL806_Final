@@ -1,11 +1,562 @@
 ---
-title: "biol806final_report"
-author: "Alyssa Daigle"
+title: "**Does the Duckweed Microbiome Change Seasonally?**"
+author: "Alyssa Daigle and Ciana Lazú"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
+bibliography: references.bib
+indent: true
+header-includes:
+- \usepackage{indentfirst}
+- \usepackage{setspace}\doublespacing 
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, include = FALSE, fig.width=7.65, fig.height=3.8)
+library(ggplot2)
+library(tidyverse)
+library(lubridate)
+library(cowplot)
+Plate_Count <- read_csv("finalplatecount.csv")
+
+#fixing errors in data frame
+
+Plate_Count$Date[79] = "7/12/22"
+
+Plate_Count <- Plate_Count %>% 
+  mutate_all( ~ifelse(. == "Green", "green", .))
+
+Plate_Count<- Plate_Count %>% 
+  mutate_all(~ifelse(. == "light red", "light_red", .))
+
+#renaming color values since I named them poorly when recording data
+#also shortening them to fit in figures better
+
+Plate_Count<- Plate_Count %>% 
+  mutate_all(~ifelse(. == "light_yellow", "beige", .))
+
+Plate_Count<- Plate_Count %>% 
+  mutate_all(~ifelse(. == "pink", "magenta", .))
+
+Plate_Count<- Plate_Count %>% 
+  mutate_all(~ifelse(. == "light_red", "pink", .))
+
+Plate_Count<- Plate_Count %>% 
+  mutate_all(~ifelse(. == "dark_yellow", "amber", .))
+
+locations <- c("Durham Reservoir",
+               "LaRoche Pond",
+               "Mill Pond",
+               "Thompson Farm",
+               "Upper Mill Pond",
+               "Woodman Rd") 
+
 ```
+
+```{r Anna matrix representing all colors}
+
+#generating a new dataframe
+make_plot_df <- Plate_Count %>% 
+  drop_na(Side) %>% 
+  filter(Side != "na") %>% #
+  mutate(real_dates = mdy(Date))
+
+#start of matrix: created to show represent every single color at every single sampling date (even when there is 0% coverage, this is represented in the matrix)
+
+#making a list of color names by grabbing unique values in columns 5, 7, 9, and 11
+colornames <- unique(unlist(make_plot_df[,c(5,7,9,11)])) 
+
+#creating empty matrix that will have columns equal to the length of color names and rows equal to the number of rows in make_plot_df
+num_col_abund <- matrix(nrow=nrow(make_plot_df),ncol=length(colornames))
+
+#For loop going through the list of colors: For each color, check the "microbe 1" column (row by row). If the color that is being indexed is present in the row, go to the next column to report the percent coverage. If it is not present in that row, report a zero. Repeats for all "microbe color" columns (5, 7, 9, and 11).
+for(i in 1:length(colornames)) {
+  
+  num_col_abund[,i] <- as.numeric(unlist(sapply(1:nrow(make_plot_df), function(z)
+    ifelse(any(make_plot_df[z,c(5,7,9,11)]==colornames[i]),
+           make_plot_df[z,c(6,8,10,12)[which(make_plot_df[z,c(5,7,9,11)]==colornames[i])]],
+           0))))
+}
+
+#setting the column names in the matrix to be the color names
+colnames(num_col_abund) <- colornames
+
+#adjusting the matrix to remove columns that include na values
+num_col_abund2 <- num_col_abund[,-which(colornames=="na")]
+```
+
+```{r custom line graph function (grid)}
+
+#11/13: still need to fix dates... decide how we want the dates to appear (same x axis or specific x axis to each location)
+
+#this chunk takes the matrix (num_col_abund2) and puts it into a function to generate line graphs for all the locations and sites at once
+
+#converts matrix (num_col_abund_2) into a new df for plotting
+all_colors_df <- data.frame(num_col_abund2) %>% 
+  mutate("Location" = make_plot_df$Location,
+         "Date" = make_plot_df$real_dates,
+         "Side" = make_plot_df$Side) %>% 
+  pivot_longer(cols = c(1:12)) 
+
+#changing the data types for plotting purposes
+all_colors_df$Location <- as.factor(all_colors_df$Location)
+all_colors_df$Date <- as.Date(all_colors_df$Date, format = "%Y-%m-%d")
+
+#open plot_all function: if else statement used to make overall legend in final figure
+plot_all <- function(location = NULL) { 
+    if (!is.null(location)) { 
+      all_colors_plot <- all_colors_df %>% 
+        filter(Location == location)
+    }
+    else {
+      all_colors_plot <- all_colors_df
+    }
+  
+   #new data frame made from the matrix that includes all colors necessary for analysis
+    all_colors_plot %>% 
+    ggplot(aes(x=Date, 
+               y=value, 
+               color=name, 
+               linetype = Side)) +
+    geom_line(size=.5) +
+    labs(color = "Microbe Color",
+         x = "Month",
+         y = "Percent Coverage") +
+    scale_color_manual(values = c("amber" = "goldenrod", 
+                                  "black" = "black", 
+                                  "yellow" = "yellow", 
+                                  "orange" = "darkorange1",
+                                  "beige" = "wheat2", 
+                                  "magenta" = "magenta",
+                                  "gray" = "gray40",
+                                  "green" = "green3",
+                                  "brown" = "saddlebrown",
+                                  "pink" = "pink",
+                                  "red" = "red",
+                                  "purple" = "purple")) +
+      scale_y_continuous(limits = c(0, 100), 
+                         breaks = seq(0, 100, by = 25)) +
+    scale_x_date(#limits = c(min(all_colors_df$Date), max(all_colors_df$Date)),
+                date_labels = "%b",
+                date_breaks = "1 month",
+                date_minor_breaks = "1 week") +
+    #expand_limits(x = c(as.Date("2022-05-01"), as.Date("2022-12-31"))) +
+    theme_classic() +
+      theme(axis.text.x = element_text(angle = 90, 
+                                       size = 6),
+            axis.text.y = element_text(size = 6),
+            plot.title = element_text(size = 8, 
+                                      hjust = 0.5),
+            axis.title = element_text(size = 8),
+            legend.title = element_text(size=8))
+
+}
+#close plot_all
+
+#open no_function: function for taking away individual legends
+no_legend <- function(p) { 
+  return(p + theme(legend.position = "none"))
+} #close no_legend
+
+
+#generating individual plots before combining in grid
+plotA <- plot_all("mill_pond") + labs(title = "Mill Pond") 
+plotB <- plot_all("woodman_rd") + labs(title = "Woodman Rd")
+plotC <- plot_all("durham_reservoir") + labs(title = "Durham Reservoir")
+plotD <- plot_all("laroche_pond") + labs(title = "LaRoche Pond")
+plotE <- plot_all("thompson_farm") + labs(title = "Thompson Farm")
+plotF <- plot_all("upper_mill_pond") + labs(title = "Upper Mill Pond")
+
+#generating "color inclusive" legend for "Side"
+plot_legend_side <- get_legend(
+  plot_all() +
+    theme(legend.direction = "horizontal",
+          legend.text = element_text(size = 7)) +
+    guides(linetype = F))
+
+#generating "color inclusive" legend for "color"
+plot_legend_color <- get_legend(
+  plot_all() +
+    theme(legend.direction = "horizontal",
+          legend.text = element_text(size = 7)) +
+    guides(color = F))
+
+#removing individual legends ("no_legend" custom function) and putting all the plots into a grid ("plot_grid" from cowplot) without a legend
+grid_no_legend <- plot_grid(no_legend(plotA) , no_legend(plotB), no_legend(plotC), no_legend(plotD), no_legend(plotE), no_legend(plotF), ncol = 3)
+
+#legend object that combines side and color data with size
+grid_plot_legends <- plot_grid(plot_legend_side, plot_legend_color, rel_widths = c(0.60, 0.40))
+
+#adding the overall legend to the grid using "make_grid_plot" (plots put into grid), and "plot_legend" (legend accounting for all locations)
+line_grid_plot <- plot_grid(grid_no_legend, grid_plot_legends, ncol = 1, rel_heights = c(1, 0.25))
+
+#displaying plot
+line_grid_plot
+```
+```{r total microbe colors counted by location}
+
+#creating a DF that includes the total microbe colors counted in each location
+total_loc_microbe_count <- all_colors_df %>% 
+  filter(value >0) %>% 
+  group_by(Location, name) %>% 
+  summarise(value = n_distinct(Location))
+
+#summing the total microbe colors counted in each location 
+location_microbe <- total_loc_microbe_count %>% 
+  group_by(Location) %>% 
+  summarise(total_colors = sum(value))
+
+#piping total microbe colors into bar graph
+locations <- c("Durham Reservoir",
+               "LaRoche Pond",
+               "Mill Pond",
+               "Thompson Farm",
+               "Upper Mill Pond",
+               "Woodman Rd")
+
+location_fig <- location_microbe %>% 
+  ggplot(aes(x = Location, 
+             y = total_colors, 
+             fill = Location)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Location", 
+       y = "Microbe Colors Observed", 
+       title = "Number of Microbe Colors Observed at Each Location") +
+  scale_x_discrete(labels = c("durham_reservoir" = "Durham Reservoir", 
+                              "laroche_pond" = "LaRoche Pond", 
+                              "mill_pond" = "Mill Pond",
+                              "thompson_farm" = "Thompson Farm",
+                              "upper_mill_pond" = "Upper Mill Pond",
+                              "woodman_rd" = "Woodman Rd")) +
+  scale_fill_discrete(labels = locations) +
+  theme_classic() +
+  theme(axis.text.x = element_text(size = 8),
+        plot.title = element_text(hjust = 0.70))
+
+location_fig
+```
+```{r stacked bar graphs to show proportion and avg comp per plate}
+
+#df with no zeroes
+all_colors_df_2 <- all_colors_df %>% 
+  filter(value != 0)
+
+#creating stacked bar graph showing the proportion (prop_fig) of microbe color incidences for each location 
+prop_fig <- all_colors_df_2 %>% 
+  ggplot(aes(x = Location, fill = name)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = c(
+    amber = "goldenrod",
+    beige = "beige",
+    black = "black",
+    orange = "darkorange1",
+    magenta = "magenta",
+    yellow = "yellow", 
+    gray = "gray40",
+    green = "green",
+    brown = "saddlebrown",
+    pink = "pink",
+    red = "red",
+    purple = "purple")) +
+  labs(
+    title = "Microbe Color Proportion", 
+    y = "Proportion of Color Incidences", 
+    x = "Location",
+    fill = "Microbe Color") +
+  scale_x_discrete(labels = c("durham_reservoir" = "Durham Reservoir", 
+                                "laroche_pond" = "LaRoche Pond", 
+                                "mill_pond" = "Mill Pond",
+                               "thompson_farm" = "Thompson Farm",
+                               "upper_mill_pond" = "Upper Mill Pond",
+                               "woodman_rd" = "Woodman Rd")) +
+  theme_classic() +
+   theme(legend.position = "right",
+         plot.title = element_text(hjust = 0.6)) +
+  theme(axis.text.x = element_text(size = 8))
+
+#displaying proportion stacked bar graph
+prop_fig
+
+#creating a new DF that includes the average percentage of each microbe color for each sampling date
+avg_percent_colors_2 <- data.frame(num_col_abund2) %>% 
+mutate("Location" = make_plot_df$Location,
+       "Date" = make_plot_df$real_dates,
+       "Side" = make_plot_df$Side) %>% 
+group_by(Location) %>% 
+summarise(amber = mean(amber), 
+          beige = mean(beige),
+          black = mean(black),
+          orange = mean(orange),
+          magenta = mean(magenta),
+          yellow = mean(yellow),
+          gray = mean(gray),
+          green = mean(green),
+          brown = mean(brown),
+          pink = mean(pink),
+          red = mean(red),
+          purple = mean(purple)) %>% 
+  pivot_longer(cols = c(2:13))
+
+#creating a stacked bar graph showing the average microbe plate composition for each location: if you were to squish all plates from one location into one, this is the "average" plate you would see
+avg_plate_fig <- avg_percent_colors_2 %>% 
+  ggplot(aes(x = Location, y = value, fill = name)) +
+    geom_bar(stat = "identity", position = "stack") +
+    scale_x_discrete(labels = c("durham_reservoir" = "Durham Reservoir", 
+                                "laroche_pond" = "LaRoche Pond", 
+                                "mill_pond" = "Mill Pond",
+                               "thompson_farm" = "Thompson Farm",
+                               "upper_mill_pond" = "Upper Mill Pond",
+                               "woodman_rd" = "Woodman Rd")) +
+    labs(title = "Average Plate Composition", 
+         y = "Percent Coverage", 
+         x = "Location",
+         fill = "Microbe Color") +
+    scale_fill_manual(values = c(amber = "goldenrod",
+                                beige = "beige",
+                                black = "black",
+                                orange = "darkorange1",
+                                magenta = "magenta",
+                                yellow = "yellow",
+                                gray = "gray40",
+                                green = "green",
+                                brown = "saddlebrown",
+                                pink = "pink",
+                                red = "red",
+                                purple = "purple")) +
+  theme_classic() +
+  theme(legend.position = "right",
+         plot.title = element_text(hjust = 0.6)) +      
+  scale_y_continuous(limits = c(0, 100),
+                   breaks = seq(0, 100, by = 25)) +
+  theme(axis.text.x = element_text(size = 8))
+
+#displaying average plate figure
+avg_plate_fig
+
+```
+
+```{r quadratic regression}
+#make_plot_df$Julian <- format(make_plot_df$real_dates, "%j")
+
+#plot(num_col_abund2[,4]~as.factor(make_plot_df$real_dates))
+
+all_colors_df$Julian <- format(all_colors_df$Date, "%j")
+
+all_colors_df$Julian <- as.numeric(all_colors_df$Julian)
+
+
+#convert julian column to either numeric or factor, square the column, quadratic regression with each color throughout time
+
+library(ggpubr)
+
+quad_plot <- all_colors_df %>% 
+  ggplot(aes(x=Julian,y=value)) +
+  geom_smooth(method = "lm", 
+              formula = y ~ poly(x, 2),
+              aes(color = name)) +
+  theme_classic() +
+  scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 25)) +
+  scale_color_manual(values = c(
+    amber = "goldenrod",
+    beige = "beige",
+    black = "black",
+    brown = "saddlebrown",
+    gray = "gray40",
+    green = "green",
+    magenta = "magenta",
+    orange = "darkorange1",
+    pink = "pink",
+    purple = "purple",
+    red = "red",
+    yellow = "yellow")) +
+  geom_point(alpha = 0.05) +
+  stat_cor(size=2.75) +
+  labs(x = "Julian Day (2022)", 
+       y = "Percent Abundance") +
+  theme(axis.text = element_text(size = 8),
+        plot.title = element_text(size = 10, face = "bold"),
+        strip.text = element_text(size = 10, face = "bold"),
+        legend.position = "none") +
+  facet_wrap(name ~., 
+             labeller = labeller(name = c(
+              amber = "Amber",
+              beige = "Beige",
+              black = "Black",
+              brown = "Brown",
+              gray = "Gray",
+              green = "Green",
+              magenta = "Magenta",
+              orange = "Orange",
+              pink = "Pink",
+              purple = "Purple",
+              red = "Red",
+              yellow = "Yellow")))
+
+quadratic_model <- lm(value ~ poly(Julian, 2), data = all_colors_df)
+summary(quadratic_model)
+
+quad_plot
+
+```
+
+```{r sampling locations map}
+# uncomment this chunk when you first open the rmd and run everything, but comment it out when you need to knit it to PDF
+
+library(leaflet)
+#install.packages("mapview")
+library(mapview)
+
+#making custom df
+locations <- c("Durham Reservoir",
+               "LaRoche Pond",
+               "Mill Pond",
+               "Thompson Farm",
+               "Upper Mill Pond",
+               "Woodman Rd")
+
+longitude <- c(-70.94412859656731,
+               -70.94562421030663,
+               -70.92152623,
+               -70.94553034136233,
+               -70.92529325317224,
+               -70.91917424282973)
+latitude <- c(43.147559724237034,
+              43.120993650017304,
+              43.130809896234574,
+              43.10826058413447,
+              43.12248009213886,
+              43.1373552934115)
+
+sampling_locations <- data.frame(Location = locations,
+                                 long = longitude,
+                                 lat = latitude)
+
+color_list <- c("blue", "red", "yellow", "purple", "green", "orange")
+
+sampling_map <- leaflet(data = sampling_locations) %>%
+    addTiles() %>%
+    addCircleMarkers(lng = ~long,
+                     lat = ~lat,
+                     color = color_list,
+                     opacity = 4) %>%
+    addScaleBar(sampling_locations,
+                position = "bottomleft") %>%
+    addLegend("bottomright",
+              colors = color_list,
+              labels = locations,
+              opacity = 1,
+              title = "Sampling Locations")
+
+sampling_map
+
+#saving leaflet as a png file
+mapshot(sampling_map, file = "sampling_locations.png", remove_controls = "zoomControl")
+
+```
+\newpage
+
+# INTRODUCTION
+
+Duckweeds are in the family Lemnaceae and includes five genera, *Spirodela*, *Landoltia*, *Lemna*, *Wolffiella*, and *Wolffia*. It tends to grow best in smaller bodies of water such as ponds. Duckweeds are a small water plant with a short generation time, that primarily reproduces clonally [@bog_duckweed_2019]. Doubling times can range from about a day to 2-3 days [@Cheng & Stomp, 2009]. It can be used for biogas, biofuel, and even animal feed [@bog_duckweed_2019].  
+
+Duckweeds have been shown to accumulate Cd, Se, Cu, and Cr [@zayed_phytoaccumulation_1998]. Its yields are among the highest for plants grown in nutrient rich wastewater [@xu_production_2012]. This is important because duckweed biomass is considered a viable option as raw material for microbial fermentation in industrial settings [@Cheng & Stomp, 2009; @xu_production_2012]. This is especially notable in the case of yeast fermentation, which produces ethanol [@Cheng & Stomp, 2009; @xu_production_2012]. Duckweeds are also a known bioremediator. Phytoremediation is using plants to clean up pollutants in the environment.
+
+Duckweeds are considered a mitigator of eutrophication because it can recover nutrients and even ammonia in water sources. Historically in the United States, duckweeds haves been used in wastewater treatment due to its ability to pull nutrients [@Cheng & Stomp, 2009]. Duckweeds have specifically been used for swine wastewater treatment in North Carolina. The introduction of duckweeds was associated with a 62–76% reduction in chemical oxygen demand (COD) and 52–73% reduction in total organic carbon (TOC) [@Cheng & Stomp, 2009]. 
+
+Observing the trends and patterns of microbe morphology on New Hampshire duckweeds can give insight on how to increase the efficiency of duckweeds as a phytoremediator locally. There is interest in learning what microbes are associated with duckweeds during different seasons when some ecosystems services are more prevalent than others. Chen et al. (2023) found that surface-flow constructed wetlands, which includes duckweeds, reduced greater amounts of nitrogen in autumn. These findings suggest that understanding how these plant-associated microbes change can help elucidate what ecosystem services are provided when. 
+
+It is important to better understand how microbial communities change and come together over time. It has been historically observed that microbes seasonally change in aquatic and terrestrial systems [@de_lima_seasonal_2022; @thoms_seasonal_2013; @zhang_seasonal_2022]. But there are few studies on variation of plant associated microbial communities through the seasons. Different metrics such as dissolved oxygen, pH, plant exudates, phosphate concentration etc. have been known to change seasonally, subsequently altering what microbes are dominant in the environment. @zhang_seasonal_2022 found that in three different aquatic plants, the highest abundance and diversity of rhizosphere bacteria was seen in the autumn months.  
+
+This study will take morphological data, like the color of the colonies and the percent coverage of the Yeast Mannitol Agar (YMA) plate associated with that color, to view the seasonal changes in microbial communities. The microbes found on these plates are bacterial and fungal communities from duckweed microbiome samples collected in New Hampshire in 2022. 
+
+# METHODS
+
+## Data Collection
+
+This data set was generated by members Alyssa Daigle and Ciana Lazu of the UNH O'Brien Lab. Using the aseptic technique, nutrient agar plates were streaked with water samples from six Durham, NH locations (Mill Pond, Woodman Road, Durham Reservoir, LaRoche Pond, Thompson Farm, and Upper Mill Pond) to achieve microbe growth. Plates were generated from each sampling date, where the sampling season ranged from May to December in 2022. Additionally, at each location, samples were taken from a "left" and a "right" side (approximately 5 feet apart) to assess diversity within each location.  Microbe diversity was quantified by assessing the percent coverage of each microbe on the agar plates. Data were recorded in Microsoft Excel to be read into RStudio using read_csv().
+
+![Map of the sampling locations]("sampling_locations.png"){width=85%}
+
+
+## Data Cleaning + Data Frames
+
+Analyses and data cleaning were conducted in the programming software R version 4.3.1 (R Core Team, 2018). From the original data frame, a matrix was generated where columns represented microbe colors, and each row represented a sampling date. The matrix quantified the percent coverage for each microbe color on every date for every location and side. This matrix was then converted back into a data frame using mutate(), where columns for Location, Side, and Date were pulled from the original data frame. Pivot_longer() was used to reverse the rows and columns to generate the final data frame, “all_colors_df”, which was used for generating line plots. Other measures were taken for data cleaning, including renaming variables and filtering columns using functions in the dplyr package.
+
+Another data frame called “location_microbe” was generated from “all_colors_df” to count the total number of microbe colors reported at each location. Dplyr functions were used to group the data by location and microbe color name, where the total number of microbe colors was summed into a new column. Finally, a data frame called “avg_percent_colors” was generated from the original matrix where the data was grouped by location and the mean percent coverage for each microbe color was calculated using summarise(). Pivot_longer() was used to display the columns as location, microbe color name, and value (average percent coverage).
+
+## Plotting
+
+### Line Plots
+
+A series of custom functions were generated to plot microbe abundance over time in a line plot. The first function “plot_all” was used to generate a line plot comparing percent microbe coverage for left and right sides across all locations. “All_colors_df” was piped into ggplot to create a line plot (geom_line()) where the x axis showed months and the y axis showed percent coverage. A line was generated for each microbe color (color = name), and sides within each site were distinguished by dashed lines (linetype = Side). “Plot_grid” (cowplot) was used to combine these plots into one “grid” figure for better location comparison. The second custom function, “no_legend”, was used to remove individual legends from each plot within plot_grid to then create an object called “plot_legend” to generate a legend for the overall grid plot that included all microbe colors. 
+
+### Bar Plots
+
+#### *Total Microbe Colors Counted per Location*
+
+The “location_microbe” data frame was piped into ggplot. The x axis showed the six locations, and the y axis showed the number of microbe colors observed. Under these parameters, geom_bar() was used to generate a bar graph showing the total number of microbe colors observed at each of the sampling locations. This figure provides a visual regarding which locations contained more microbe colors.
+
+#### *Proportion of Microbe Color Incidences per Location*
+
+The “all_colors_df” data frame was piped into ggplot. The x axis showed Location, and the fill showed the microbe color name. Geom_bar() was used to generate a stacked bar graph, where a manual color list was used to display microbe colors. The result is a stacked bar graph displaying the proportion of microbe color incidences at each location. This figure provided a visual that allowed for comparison of microbe color occurrences. 
+
+#### *Average Microbe Color Plate Composition*
+
+The ”avg_percent_colors” data frame was piped into ggplot. The x axis showed Location and the y axis showed the percent coverage value. Fill was set to the name of the microbe color. Geom_bar() was used to generate a stacked bar graph, where a manual color list was used to display microbe colors. The result is a stacked bar graph displaying the average percent plate composition for each location. In other words, this graph aims to display what the “average” plate of microbes would look like from each location. The y axis is a scale of the total percent coverage of a microbe color on a plate.
+
+## Other Plots
+
+#### *Quadratic Regression*
+
+The Date column in the “all_colors_df” data frame was formatted as Julian dates and then changed into numeric values to prepare for the quadratic regression. From this data frame, the “lm” function was used to create a quadratic regression where x = Julian date and y = the percent coverage of each microbe color. Ggplot was used to visualize this data, where a separate plot with stats was generated for each microbe color. The package “ggpubr” with the command “stat_cor()” was used to amend stats to the plots. 
+
+#### *Sampling Locations Map*
+
+To generate a map of the sampling site, the packages “leaflet” and “mapview” were installed. A custom data frame was generated by creating three objects: one with a list of location names, one with a list of location longitudes, and one with a list of location latitudes. The “data.frame” function was used to combine these objects into a data frame called “sampling_locations.”  A new object called “sampling_map” was created by piping the data frame into leaflet, and the rsulting map was saved using mapshot(). 
+
+All code for data cleaning and figure generation can be found in the following repository: https://github.com/alyssa-daigle/BIOL806_Final.git.
+
+# RESULTS
+```{r, fig.cap = "The incidence of each color as a proportion at each location.", echo=FALSE, include=TRUE}
+prop_fig
+```
+
+```{r, fig.cap = "The average percent coverage for each color at each location.", echo=FALSE, include=TRUE}
+avg_plate_fig
+```
+
+```{r, fig.cap = "Average number of microbes observed for each plate at various locations.", echo=FALSE, include=TRUE}
+location_fig
+```
+
+```{r, fig.cap = "Line plot showing the percent coverage of each color over time at each location on the Left or Right side.", echo=FALSE, include=TRUE}
+line_grid_plot
+```
+
+```{r, fig.cap = "Quadratic regression looking at the relationship between Julian Day and the percent abundance of each color.", echo=FALSE, include=TRUE, warning=FALSE}
+
+quad_plot
+
+```
+
+Beige, amber, and black are found at each of the locations as seen in Figure 2. Magenta, pink, purple, grey, and green tend to be rarer in general. Plates at each site are mostly composed of beige microbes (Figure 3). The rarer colors mentioned above also do not tend to cover much of the plate. Most sites have 7-8 microbe colors (Figure 4). The exception to this is Mill Pond, which has 5 microbe colors on average on each plate.
+
+There are some interesting trends seen in Figure 5. The Left sampling site of Mill Pond has an increase of beige microbes through July to December, but this same trend is not seen in the Right sampling site. Woodman Rd has some spikes of magenta and black microbes on the Right sampling site around July to September. The Left sampling site also has a spike of black microbes around the same time. Durham Reservoir has a decrease of black microbes on the Left sampling site from August to September. On the Right sampling site, there is a slight increase of black microbes from August to October. LaRoche Pond has a high percent coverage of a rarer colored microbe (magenta) in mid-September on the Left sampling site. Thompson Farm, on the Left sampling site, has a high percent coverage of the beige microbes which is not seen again after November. There is also a spike of black microbes at both the sampling sites. The spike on the Left sampling site is around early September while the spike on the Right sampling site is around early October. Upper Mill Pond has a high percent coverage of beige microbes on the Right sampling site. The beige colored microbe started to decline around mid-August. On the Left sampling site, different colored microbes have a low percent coverage, though beige microbes begin to increase around mid-October.
+
+The R2 value is 0.00016, suggesting this model does not explain most of the variation in the response variable, the percent coverage of each microbe (Figure 6). The F-stat is 0.06174 and the p-value is 0.9401, meaning this model is not statistically significant. 0.063 is the change in the percent coverage for a one-unit change in Julian, and 4.10 is the change in the rate of change of the percent coverage concerning Julian.
+
+## DISCUSSION
+
+This study aimed to find a connection between time (namely the seasons) and when certain microbe colors appear on the plates. There was no significant correlation between time and color of the microbe (Figure 4). This contradicts previous work that found that microbes significantly change by season (de Lima et al., 2022; Thoms & Gleixner, 2013; Zhang et al., 2022). 
+
+It is a possibility that with more data, there may be more of an association with microbes and different seasons. A lack of long-term data is one of the main limitations of this study. Additionally, there was no identification of any of the microbes, meaning only morphological data was used to correlate microbes with seasonality. If microbes were identified by family or genus, a significant pattern correlated to season may become apparent. Notably, previous research based their findings on identification of microbes rather than on morphological data.
+
+Future research should mediate these limitations by increasing the number of samples and identifying microbes. This data also may benefit by utilizing a program to calculate the percent coverage on each plate to make the data more precise and accurate.
+
+\newpage 
+
+## References 
+
+<div id="refs"></div>
 
