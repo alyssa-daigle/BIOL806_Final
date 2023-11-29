@@ -39,6 +39,13 @@ Plate_Count<- Plate_Count %>%
 Plate_Count<- Plate_Count %>% 
   mutate_all(~ifelse(. == "dark_yellow", "amber", .))
 
+locations <- c("Durham Reservoir",
+               "LaRoche Pond",
+               "Mill Pond",
+               "Thompson Farm",
+               "Upper Mill Pond",
+               "Woodman Rd") 
+
 ```
 
 ```{r Anna matrix representing all colors}
@@ -195,7 +202,7 @@ location_microbe <- total_loc_microbe_count %>%
   summarise(total_colors = sum(value))
 
 #piping total microbe colors into bar graph
-location_microbe %>% 
+location_fig <- location_microbe %>% 
   ggplot(aes(x = Location, 
              y = total_colors, 
              fill = Location)) +
@@ -209,9 +216,12 @@ location_microbe %>%
                               "thompson_farm" = "Thompson Farm",
                               "upper_mill_pond" = "Upper Mill Pond",
                               "woodman_rd" = "Woodman Rd")) +
+  scale_fill_discrete(labels = locations) +
   theme_classic() +
   theme(axis.text.x = element_text(size = 8),
         plot.title = element_text(hjust = 1))
+
+
 ```
 
 ```{r sample count table}
@@ -484,3 +494,19 @@ sampling_map
 mapshot(sampling_map, file = "sampling_locations.png", remove_controls = "zoomControl")
 
 ```
+```{r stats objects}
+#creating stats objects that will useful for in-line coding for the report
+
+summary(quadratic_model)
+
+#
+coef_summary <- summary(quadratic_model)$coefficients
+print(coef_summary)
+
+r_squared <- summary(quadratic_model)$r.squared
+
+print(r_squared)
+
+```
+
+
