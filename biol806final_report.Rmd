@@ -6,10 +6,10 @@ output:
   pdf_document: default
   html_document: default
 bibliography: references.bib
-indent: true
+indent: true #indents beginning of each paragraph
 header-includes:
-- \usepackage{indentfirst}
-- \usepackage{setspace}\doublespacing 
+- \usepackage{indentfirst} #indenting first paragraph
+- \usepackage{setspace}\doublespacing #double spaces document
 ---
 
 ```{r setup, include=FALSE}
@@ -45,6 +45,7 @@ Plate_Count<- Plate_Count %>%
 Plate_Count<- Plate_Count %>% 
   mutate_all(~ifelse(. == "dark_yellow", "amber", .))
 
+#list of all sampling locations
 locations <- c("Durham Reservoir",
                "LaRoche Pond",
                "Mill Pond",
@@ -87,8 +88,6 @@ num_col_abund2 <- num_col_abund[,-which(colornames=="na")]
 ```
 
 ```{r custom line graph function (grid)}
-
-#11/13: still need to fix dates... decide how we want the dates to appear (same x axis or specific x axis to each location)
 
 #this chunk takes the matrix (num_col_abund2) and puts it into a function to generate line graphs for all the locations and sites at once
 
@@ -208,12 +207,6 @@ location_microbe <- total_loc_microbe_count %>%
   summarise(total_colors = sum(value))
 
 #piping total microbe colors into bar graph
-locations <- c("Durham Reservoir",
-               "LaRoche Pond",
-               "Mill Pond",
-               "Thompson Farm",
-               "Upper Mill Pond",
-               "Woodman Rd")
 
 location_fig <- location_microbe %>% 
   ggplot(aes(x = Location, 
@@ -337,17 +330,14 @@ avg_plate_fig
 ```
 
 ```{r quadratic regression}
-#make_plot_df$Julian <- format(make_plot_df$real_dates, "%j")
 
-#plot(num_col_abund2[,4]~as.factor(make_plot_df$real_dates))
-
+#converting dates to julian
 all_colors_df$Julian <- format(all_colors_df$Date, "%j")
 
+#converting julian character to numeric
 all_colors_df$Julian <- as.numeric(all_colors_df$Julian)
 
-
-#convert julian column to either numeric or factor, square the column, quadratic regression with each color throughout time
-
+#necessary for stat_cor
 library(ggpubr)
 
 quad_plot <- all_colors_df %>% 
@@ -393,6 +383,7 @@ quad_plot <- all_colors_df %>%
               red = "Red",
               yellow = "Yellow")))
 
+#wuad regression model
 quadratic_model <- lm(value ~ poly(Julian, 2), data = all_colors_df)
 summary(quadratic_model)
 
@@ -401,7 +392,6 @@ quad_plot
 ```
 
 ```{r sampling locations map}
-# uncomment this chunk when you first open the rmd and run everything, but comment it out when you need to knit it to PDF
 
 library(leaflet)
 #install.packages("mapview")
@@ -458,13 +448,13 @@ mapshot(sampling_map, file = "sampling_locations.png", remove_controls = "zoomCo
 
 # INTRODUCTION
 
-Duckweeds are in the family Lemnaceae and includes five genera, *Spirodela*, *Landoltia*, *Lemna*, *Wolffiella*, and *Wolffia*. It tends to grow best in smaller bodies of water such as ponds. Duckweeds are a small water plant with a short generation time, that primarily reproduces clonally [@bog_duckweed_2019]. Doubling times can range from about a day to 2-3 days [@Cheng & Stomp, 2009]. It can be used for biogas, biofuel, and even animal feed [@bog_duckweed_2019].  
+Duckweeds are in the family Lemnaceae and includes five genera, *Spirodela*, *Landoltia*, *Lemna*, *Wolffiella*, and *Wolffia*. They tend to grow best in smaller bodies of water such as ponds. Duckweeds are small water plants with a short generation time, that primarily reproduces clonally [@bog_duckweed_2019]. Doubling times can range from about a day to 2-3 days [@cheng_growing_2009]. They can be used for biogas, biofuel, and even animal feed [@bog_duckweed_2019].  
 
-Duckweeds have been shown to accumulate Cd, Se, Cu, and Cr [@zayed_phytoaccumulation_1998]. Its yields are among the highest for plants grown in nutrient rich wastewater [@xu_production_2012]. This is important because duckweed biomass is considered a viable option as raw material for microbial fermentation in industrial settings [@Cheng & Stomp, 2009; @xu_production_2012]. This is especially notable in the case of yeast fermentation, which produces ethanol [@Cheng & Stomp, 2009; @xu_production_2012]. Duckweeds are also a known bioremediator. Phytoremediation is using plants to clean up pollutants in the environment.
+Duckweeds have been shown to accumulate Cd, Se, Cu, and Cr [@zayed_phytoaccumulation_1998]. Its yields are among the highest for plants grown in nutrient rich wastewater [@xu_production_2012]. This is important because duckweed biomass is considered a viable option as raw material for microbial fermentation in industrial settings [@cheng_growing_2009; @xu_production_2012]. This is especially notable in the case of yeast fermentation, which produces ethanol [@cheng_growing_2009; @xu_production_2012]. Duckweeds are also a known bioremediator, where plants are used to remove pollutants from the environment.
 
-Duckweeds are considered a mitigator of eutrophication because it can recover nutrients and even ammonia in water sources. Historically in the United States, duckweeds haves been used in wastewater treatment due to its ability to pull nutrients [@Cheng & Stomp, 2009]. Duckweeds have specifically been used for swine wastewater treatment in North Carolina. The introduction of duckweeds was associated with a 62–76% reduction in chemical oxygen demand (COD) and 52–73% reduction in total organic carbon (TOC) [@Cheng & Stomp, 2009]. 
+Duckweeds are considered mitigators of eutrophication because they can recover nutrients and even ammonia in water sources. Historically in the United States, duckweeds haves been used in wastewater treatment due to their ability to pull nutrients [@cheng_growing_2009]. Duckweeds have specifically been used for swine wastewater treatment in North Carolina. The introduction of duckweeds was associated with a 62–76% reduction in chemical oxygen demand (COD) and 52–73% reduction in total organic carbon (TOC) [@cheng_growing_2009]. 
 
-Observing the trends and patterns of microbe morphology on New Hampshire duckweeds can give insight on how to increase the efficiency of duckweeds as a phytoremediator locally. There is interest in learning what microbes are associated with duckweeds during different seasons when some ecosystems services are more prevalent than others. Chen et al. (2023) found that surface-flow constructed wetlands, which includes duckweeds, reduced greater amounts of nitrogen in autumn. These findings suggest that understanding how these plant-associated microbes change can help elucidate what ecosystem services are provided when. 
+Observing the trends and patterns of microbe morphology on New Hampshire, duckweeds can give insight on how to increase the efficiency of duckweeds as a phytoremediator locally. There is interest in learning what microbes are associated with duckweeds during different seasons when some ecosystems services are more prevalent than others. @chen_seasonal_2023 found that surface-flow constructed wetlands, which includes duckweeds, reduced greater amounts of nitrogen in autumn. These findings suggest that understanding how these plant-associated microbes change can help elucidate what ecosystem services are provided when. 
 
 It is important to better understand how microbial communities change and come together over time. It has been historically observed that microbes seasonally change in aquatic and terrestrial systems [@de_lima_seasonal_2022; @thoms_seasonal_2013; @zhang_seasonal_2022]. But there are few studies on variation of plant associated microbial communities through the seasons. Different metrics such as dissolved oxygen, pH, plant exudates, phosphate concentration etc. have been known to change seasonally, subsequently altering what microbes are dominant in the environment. @zhang_seasonal_2022 found that in three different aquatic plants, the highest abundance and diversity of rhizosphere bacteria was seen in the autumn months.  
 
@@ -474,16 +464,16 @@ This study will take morphological data, like the color of the colonies and the 
 
 ## Data Collection
 
-This data set was generated by members Alyssa Daigle and Ciana Lazu of the UNH O'Brien Lab. Using the aseptic technique, nutrient agar plates were streaked with water samples from six Durham, NH locations (Mill Pond, Woodman Road, Durham Reservoir, LaRoche Pond, Thompson Farm, and Upper Mill Pond) to achieve microbe growth. Plates were generated from each sampling date, where the sampling season ranged from May to December in 2022. Additionally, at each location, samples were taken from a "left" and a "right" side (approximately 5 feet apart) to assess diversity within each location.  Microbe diversity was quantified by assessing the percent coverage of each microbe on the agar plates. Data were recorded in Microsoft Excel to be read into RStudio using read_csv().
+This data set was generated by members Alyssa Daigle and Ciana Lazu of the UNH O'Brien Lab. Using the aseptic technique, nutrient agar plates were streaked with water samples from six Durham, NH locations (Mill Pond, Woodman Road, Durham Reservoir, LaRoche Pond, Thompson Farm, and Upper Mill Pond) to achieve microbe growth. Plates were generated from each sampling date, where the sampling season ranged from May to December in 2022. Additionally, at each location, samples were taken from a "left" and a "right" side (approximately 5 feet apart) to assess diversity within each location. Microbe diversity was quantified by assessing the percent coverage of each microbe on the agar plates. Data were recorded in Microsoft Excel to be read into RStudio using read_csv().
 
-![Map of the sampling locations]("sampling_locations.png"){width=85%}
+![Map of the sampling locations in Durham, NH.]("sampling_locations.png"){width=85%}
 
 
 ## Data Cleaning + Data Frames
 
 Analyses and data cleaning were conducted in the programming software R version 4.3.1 (R Core Team, 2018). From the original data frame, a matrix was generated where columns represented microbe colors, and each row represented a sampling date. The matrix quantified the percent coverage for each microbe color on every date for every location and side. This matrix was then converted back into a data frame using mutate(), where columns for Location, Side, and Date were pulled from the original data frame. Pivot_longer() was used to reverse the rows and columns to generate the final data frame, “all_colors_df”, which was used for generating line plots. Other measures were taken for data cleaning, including renaming variables and filtering columns using functions in the dplyr package.
 
-Another data frame called “location_microbe” was generated from “all_colors_df” to count the total number of microbe colors reported at each location. Dplyr functions were used to group the data by location and microbe color name, where the total number of microbe colors was summed into a new column. Finally, a data frame called “avg_percent_colors” was generated from the original matrix where the data was grouped by location and the mean percent coverage for each microbe color was calculated using summarise(). Pivot_longer() was used to display the columns as location, microbe color name, and value (average percent coverage).
+Another data frame called “location_microbe” was generated from “all_colors_df” to count the total number of microbe colors reported at each location. Dplyr functions were used to group the data by location and microbe color name, where the total number of microbe colors was summed into a new column. Finally, a data frame called “avg_percent_colors” was generated from the original matrix where the data were grouped by location and the mean percent coverage for each microbe color was calculated using summarise(). Pivot_longer() was used to display the columns as location, microbe color name, and value (average percent coverage).
 
 ## Plotting
 
@@ -493,19 +483,19 @@ A series of custom functions were generated to plot microbe abundance over time 
 
 ### Bar Plots
 
-#### *Total Microbe Colors Counted per Location*
-
-The “location_microbe” data frame was piped into ggplot. The x axis showed the six locations, and the y axis showed the number of microbe colors observed. Under these parameters, geom_bar() was used to generate a bar graph showing the total number of microbe colors observed at each of the sampling locations. This figure provides a visual regarding which locations contained more microbe colors.
-
 #### *Proportion of Microbe Color Incidences per Location*
 
 The “all_colors_df” data frame was piped into ggplot. The x axis showed Location, and the fill showed the microbe color name. Geom_bar() was used to generate a stacked bar graph, where a manual color list was used to display microbe colors. The result is a stacked bar graph displaying the proportion of microbe color incidences at each location. This figure provided a visual that allowed for comparison of microbe color occurrences. 
 
 #### *Average Microbe Color Plate Composition*
 
-The ”avg_percent_colors” data frame was piped into ggplot. The x axis showed Location and the y axis showed the percent coverage value. Fill was set to the name of the microbe color. Geom_bar() was used to generate a stacked bar graph, where a manual color list was used to display microbe colors. The result is a stacked bar graph displaying the average percent plate composition for each location. In other words, this graph aims to display what the “average” plate of microbes would look like from each location. The y axis is a scale of the total percent coverage of a microbe color on a plate.
+The "avg_percent_colors" data frame was piped into ggplot. The x axis showed Location and the y axis showed the percent coverage value. Fill was set to the name of the microbe color. Geom_bar() was used to generate a stacked bar graph, where a manual color list was used to display microbe colors. The result is a stacked bar graph displaying the average percent plate composition for each location. In other words, this figure aims to display what the “average” plate of microbes would look like from each location. The y axis is a scale of the total percent coverage of a microbe color on a plate.
 
-## Other Plots
+#### *Number of Microbes Observed at Each Location*
+
+The “location_microbe” data frame was piped into ggplot. The x axis showed the six locations, and the y axis showed the number of microbe colors observed. Under these parameters, geom_bar() was used to generate a bar graph showing the total number of microbe colors observed at each of the sampling locations. This figure provides a visual regarding which locations contained more microbe colors.
+
+### Other Plots
 
 #### *Quadratic Regression*
 
@@ -513,28 +503,28 @@ The Date column in the “all_colors_df” data frame was formatted as Julian da
 
 #### *Sampling Locations Map*
 
-To generate a map of the sampling site, the packages “leaflet” and “mapview” were installed. A custom data frame was generated by creating three objects: one with a list of location names, one with a list of location longitudes, and one with a list of location latitudes. The “data.frame” function was used to combine these objects into a data frame called “sampling_locations.”  A new object called “sampling_map” was created by piping the data frame into leaflet, and the rsulting map was saved using mapshot(). 
+To generate a map of the sampling site, the packages “leaflet” and “mapview” were installed. A custom data frame was generated by creating three objects: one with a list of location names, one with a list of location longitudes, and one with a list of location latitudes. The “data.frame” function was used to combine these objects into a data frame called “sampling_locations.”  A new object called “sampling_map” was created by piping the data frame into leaflet, and the resulting map was saved using mapshot(). 
 
 All code for data cleaning and figure generation can be found in the following repository: https://github.com/alyssa-daigle/BIOL806_Final.git.
 
 # RESULTS
-```{r, fig.cap = "The incidence of each color as a proportion at each location.", echo=FALSE, include=TRUE}
+```{r proportion figure, fig.cap = "The incidence of each microbe color as a proportion at each location.", echo=FALSE, include=TRUE}
 prop_fig
 ```
 
-```{r, fig.cap = "The average percent coverage for each color at each location.", echo=FALSE, include=TRUE}
+```{r avg plate comp figure, fig.cap = "The average percent coverage for each microbe color at each location.", echo=FALSE, include=TRUE}
 avg_plate_fig
 ```
 
-```{r, fig.cap = "Average number of microbes observed for each plate at various locations.", echo=FALSE, include=TRUE}
+```{r total microbes figure, fig.cap = "Total number of microbes observed from each plate at each location.", echo=FALSE, include=TRUE}
 location_fig
 ```
 
-```{r, fig.cap = "Line plot showing the percent coverage of each color over time at each location on the Left or Right side.", echo=FALSE, include=TRUE}
+```{r line plot all colors figure, fig.cap = "Line plot showing the percent coverage of each color over time at each location on the Left or Right side.", echo=FALSE, include=TRUE}
 line_grid_plot
 ```
 
-```{r, fig.cap = "Quadratic regression looking at the relationship between Julian Day and the percent abundance of each color.", echo=FALSE, include=TRUE, warning=FALSE}
+```{r quad reg plot, fig.cap = "Quadratic regression analyzing the relationship between Julian Day and the percent abundance of each microbe color.", echo=FALSE, include=TRUE, warning=FALSE}
 
 quad_plot
 
@@ -548,7 +538,7 @@ The R2 value is 0.00016, suggesting this model does not explain most of the vari
 
 ## DISCUSSION
 
-This study aimed to find a connection between time (namely the seasons) and when certain microbe colors appear on the plates. There was no significant correlation between time and color of the microbe (Figure 4). This contradicts previous work that found that microbes significantly change by season (de Lima et al., 2022; Thoms & Gleixner, 2013; Zhang et al., 2022). 
+This study aimed to find a connection between time (namely the seasons) and when certain microbe colors appear on the plates. There was no significant correlation between time and color of the microbe (Figure 4). This contradicts previous work that found that microbes significantly change by season [@de_lima_seasonal_2022; @thoms_seasonal_2013; @zhang_seasonal_2022]. 
 
 It is a possibility that with more data, there may be more of an association with microbes and different seasons. A lack of long-term data is one of the main limitations of this study. Additionally, there was no identification of any of the microbes, meaning only morphological data was used to correlate microbes with seasonality. If microbes were identified by family or genus, a significant pattern correlated to season may become apparent. Notably, previous research based their findings on identification of microbes rather than on morphological data.
 
