@@ -48,7 +48,7 @@ locations <- c("Durham Reservoir",
 
 ```
 
-```{r Anna matrix representing all colors}
+```{r matrix representing all colors}
 
 #generating a new dataframe
 make_plot_df <- Plate_Count %>% 
@@ -404,15 +404,15 @@ summary(quadratic_model)
 ```{r testing a second option for the first line plot, easier code}
 library(ggplot2)
 
-all_colors_df %>%
-  ggplot(aes(x = Julian, 
+facet_line_plot <- all_colors_df %>%
+  ggplot(aes(x = Date, 
              y = value, 
              color = name, 
              linetype = Side)) +
   geom_line(size = 0.5) +
   labs(color = "Microbe Color",
-       x = "Julian Day (2022)",
-       y = "Percent Coverage") +
+       x = "Month (2022)",
+       y = "Plate Percent Coverage") +
   scale_color_manual(values = c(
     "amber" = "goldenrod",
     "black" = "black",
@@ -428,6 +428,10 @@ all_colors_df %>%
     "purple" = "purple"
   )) +
   scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 25)) +
+  scale_x_date(limits = c(min(all_colors_df$Date), max(all_colors_df$Date)),
+                date_labels = "%b",
+                date_breaks = "1 month",
+                date_minor_breaks = "1 week") +
   theme_classic() +
   theme(axis.text = element_text(size = 8),
         plot.title = element_text(size = 8, face = "bold"),
