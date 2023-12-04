@@ -445,7 +445,10 @@ facet_line_plot <- all_colors_df %>%
           upper_mill_pond = "Upper Mill Pond",
           woodman_rd = "Woodman Rd")))
 
+facet_line_plot
 ```
+
+
 ```{r sampling locations map}
 library(leaflet)
 #install.packages("mapview")
