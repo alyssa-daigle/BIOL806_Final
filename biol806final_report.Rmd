@@ -460,6 +460,8 @@ To generate a map of the sampling site, the packages “leaflet” and “mapvie
 
 The Date column in the “all_colors_df” data frame was formatted as Julian dates and then changed into numeric values to prepare for the quadratic regression. From this data frame, the “lm” function from the "stats" package was used to perform a quadratic regression where Julian date was the predictor of the percent coverage of each microbe color. 
 
+All code for data cleaning and figure generation can be found in the following repository: https://github.com/alyssa-daigle/BIOL806_Final.git.
+
 # RESULTS
 
 ```{r proportion figure, fig.cap = "The incidence of each microbe color as a proportion at each location.", echo=FALSE, include=TRUE}
