@@ -87,7 +87,7 @@ colnames(num_col_abund) <- colornames
 num_col_abund2 <- num_col_abund[,-which(colornames=="na")]
 ```
 
-```{r custom line graph function (grid)}
+```{r line graph}
 
 #this chunk takes the matrix (num_col_abund2) and puts it into a function to generate line graphs for all the locations and sites at once
 
@@ -102,96 +102,59 @@ all_colors_df <- data.frame(num_col_abund2) %>%
 all_colors_df$Location <- as.factor(all_colors_df$Location)
 all_colors_df$Date <- as.Date(all_colors_df$Date, format = "%Y-%m-%d")
 
-#open plot_all function: if else statement used to make overall legend in final figure
-plot_all <- function(location = NULL) { 
-    if (!is.null(location)) { 
-      all_colors_plot <- all_colors_df %>% 
-        filter(Location == location)
-    }
-    else {
-      all_colors_plot <- all_colors_df
-    }
-  
-   #new data frame made from the matrix that includes all colors necessary for analysis
-    all_colors_plot %>% 
-    ggplot(aes(x=Date, 
-               y=value, 
-               color=name, 
-               linetype = Side)) +
-    geom_line(size=.5) +
-    labs(color = "Microbe Color",
-         x = "Month",
-         y = "Percent Coverage") +
-    scale_color_manual(values = c("amber" = "goldenrod", 
-                                  "black" = "black", 
-                                  "yellow" = "yellow", 
-                                  "orange" = "darkorange1",
-                                  "beige" = "wheat2", 
-                                  "magenta" = "magenta",
-                                  "gray" = "gray40",
-                                  "green" = "green3",
-                                  "brown" = "saddlebrown",
-                                  "pink" = "pink",
-                                  "red" = "red",
-                                  "purple" = "purple")) +
-      scale_y_continuous(limits = c(0, 100), 
-                         breaks = seq(0, 100, by = 25)) +
-    scale_x_date(#limits = c(min(all_colors_df$Date), max(all_colors_df$Date)),
+library(ggplot2)
+
+facet_line_plot <- all_colors_df %>%
+  ggplot(aes(x = Date, 
+             y = value, 
+             color = name, 
+             linetype = Side)) +
+  geom_line(size = 0.5) +
+  labs(color = "Microbe Color",
+       x = "Month (2022)",
+       y = "Plate Percent Coverage") +
+  scale_color_manual(values = c(
+    "amber" = "goldenrod",
+    "black" = "black",
+    "yellow" = "yellow",
+    "orange" = "darkorange1",
+    "beige" = "wheat2",
+    "magenta" = "magenta",
+    "gray" = "gray40",
+    "green" = "green3",
+    "brown" = "saddlebrown",
+    "pink" = "pink",
+    "red" = "red",
+    "purple" = "purple"
+  )) +
+  scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 25)) +
+  scale_x_date(limits = c(min(all_colors_df$Date), max(all_colors_df$Date)),
                 date_labels = "%b",
                 date_breaks = "1 month",
                 date_minor_breaks = "1 week") +
-    #expand_limits(x = c(as.Date("2022-05-01"), as.Date("2022-12-31"))) +
-    theme_classic() +
-      theme(axis.text.x = element_text(angle = 90, 
-                                       size = 6),
-            axis.text.y = element_text(size = 6),
-            plot.title = element_text(size = 7, 
-                                      hjust = 0.5),
-            axis.title = element_text(size = 6),
-            legend.title = element_text(size=6))
+  theme_classic() +
+  theme(axis.text = element_text(size = 6),
+        plot.title = element_text(size = 7, face = "bold"),
+        strip.text = element_text(size = 7, face = "bold"),
+        axis.text.x = element_text(size = 6),
+        axis.text.y = element_text(size = 6),
+        axis.title = element_text(size = 7)) +
+  facet_wrap(~Location, 
+             labeller = labeller(Location = c(
+          durham_reservoir = "Durham Reservoir",
+          laroche_pond = "LaRoche Pond",
+          mill_pond = "Mill Pond",
+          thompson_farm = "Thompson Farm",
+          upper_mill_pond = "Upper Mill Pond",
+          woodman_rd = "Woodman Rd"))) +
+ theme(axis.text = element_text(size = 6),
+        plot.title = element_text(size = 7, face = "bold"),
+        strip.text = element_text(size = 7, face = "bold"),
+        legend.title = element_text(size = 7),
+        legend.text = element_text(size = 6)) +
+  guides(linetype = 'none')
 
-}
-#close plot_all
-
-#open no_function: function for taking away individual legends
-no_legend <- function(p) { 
-  return(p + theme(legend.position = "none"))
-} #close no_legend
-
-
-#generating individual plots before combining in grid
-plotA <- plot_all("mill_pond") + labs(title = "Mill Pond") 
-plotB <- plot_all("woodman_rd") + labs(title = "Woodman Rd")
-plotC <- plot_all("durham_reservoir") + labs(title = "Durham Reservoir")
-plotD <- plot_all("laroche_pond") + labs(title = "LaRoche Pond")
-plotE <- plot_all("thompson_farm") + labs(title = "Thompson Farm")
-plotF <- plot_all("upper_mill_pond") + labs(title = "Upper Mill Pond")
-
-#generating "color inclusive" legend for "Side"
-plot_legend_side <- get_legend(
-  plot_all() +
-    theme(legend.direction = "horizontal",
-          legend.text = element_text(size = 6)) +
-    guides(linetype = F))
-
-#generating "color inclusive" legend for "color"
-plot_legend_color <- get_legend(
-  plot_all() +
-    theme(legend.direction = "horizontal",
-          legend.text = element_text(size = 6)) +
-    guides(color = F))
-
-#removing individual legends ("no_legend" custom function) and putting all the plots into a grid ("plot_grid" from cowplot) without a legend
-grid_no_legend <- plot_grid(no_legend(plotA) , no_legend(plotB), no_legend(plotC), no_legend(plotD), no_legend(plotE), no_legend(plotF), ncol = 3)
-
-#legend object that combines side and color data with size
-grid_plot_legends <- plot_grid(plot_legend_side, plot_legend_color, rel_widths = c(0.60, 0.40))
-
-#adding the overall legend to the grid using "make_grid_plot" (plots put into grid), and "plot_legend" (legend accounting for all locations)
-line_grid_plot <- plot_grid(grid_no_legend, grid_plot_legends, ncol = 1, rel_heights = c(1, 0.3))
-
-#displaying plot
-line_grid_plot
+facet_line_plot
 ```
 
 ```{r total microbe colors counted by location}
@@ -483,7 +446,7 @@ This data set was generated by members Alyssa Daigle and Ciana Lazú of the UNH 
 
 ## Data Cleaning + Data Frames
 
-Analyses and data cleaning were conducted in the programming software R version 4.3.1 (R Core Team, 2018). From the original data frame, a matrix was generated where columns represented microbe colors, and each row represented a sampling date. The matrix quantified the percent coverage for each microbe color on every date for every location and side. This matrix was then converted back into a data frame using mutate(), where columns for Location, Side, and Date were pulled from the original data frame. Pivot_longer() was used to reverse the rows and columns to generate the final data frame, “all_colors_df”, which was used for generating line plots. Other measures were taken for data cleaning, including renaming variables and filtering columns using functions in the dplyr package.
+Analyses and data cleaning were conducted in the programming software R version 4.3.1 (R Core Team, 2018). From the original data frame, a matrix was generated where columns represented microbe colors, and each row represented a sampling date. The matrix quantified the percent coverage for each microbe color on every date for every location and side. This matrix was then converted back into a data frame using mutate(), where columns for Location, Side, and Date were pulled from the original data frame. Pivot_longer() was used to reverse the rows and columns to generate the final data frame, “all_colors_df”, which was used for generating line plots. Renaming variables and filtering columns occurred using functions in the dplyr package.
 
 Another data frame called “location_microbe” was generated from “all_colors_df” to count the total number of microbe colors reported at each location. Dplyr functions were used to group the data by location and microbe color name, where the total number of microbe colors was summed into a new column. Finally, a data frame called “avg_percent_colors” was generated from the original matrix where the data were grouped by location and the mean percent coverage for each microbe color was calculated using summarise(). Pivot_longer() was used to display the columns as location, microbe color name, and value (average percent coverage).
 
@@ -497,8 +460,6 @@ To generate a map of the sampling site, the packages “leaflet” and “mapvie
 
 The Date column in the “all_colors_df” data frame was formatted as Julian dates and then changed into numeric values to prepare for the quadratic regression. From this data frame, the “lm” function from the "stats" package was used to perform a quadratic regression where Julian date was the predictor of the percent coverage of each microbe color. 
 
-All code for data cleaning and figure generation can be found in the following repository: https://github.com/alyssa-daigle/BIOL806_Final.git.
-
 # RESULTS
 
 ```{r proportion figure, fig.cap = "The incidence of each microbe color as a proportion at each location.", echo=FALSE, include=TRUE}
@@ -508,14 +469,15 @@ prop_fig
 ```{r avg plate comp figure, fig.cap = "The average percent plate coverage for each microbe color at each location.", echo=FALSE, include=TRUE}
 avg_plate_fig
 ```
+
 Beige, amber, and black are found at each of the locations as seen in Figure 2. Magenta, pink, purple, grey, and green tend to be rarer in general. Plates at each site are mostly composed of beige microbes (Figure 3). The rarer colors mentioned above also do not tend to cover much of the plate. Most sites have 7-8 microbe colors (Figure 4). The exception to this is Mill Pond, which has 5 microbe colors on average on each plate.
 
 ```{r total microbes figure, fig.cap = "Total number of microbes observed from each plate at each location.", echo=FALSE, include=TRUE}
 location_fig
 ```
 
-```{r line plot all colors figure, fig.cap = "Percent plate coverage of each color over time at each location on the Left vs Right side.", echo=FALSE, include=TRUE}
-line_grid_plot
+```{r line plot all colors figure, fig.cap = "Percent plate coverage of each color over time at each location on the Left vs Right side. Bold line represents Left side, dashed line represents Right side.", echo=FALSE, include=TRUE}
+facet_line_plot
 ```
 
 ```{r quad reg plot, fig.cap = "Quadratic regression analyzing the relationship between Julian Day and the percent abundance of each microbe color.", echo=FALSE, include=TRUE, warning=FALSE}
@@ -523,8 +485,6 @@ line_grid_plot
 quad_plot
 
 ```
-
-Beige, amber, and black are found at each of the locations as seen in Figure 2. Magenta, pink, purple, grey, and green tend to be rarer in general. Plates at each site are mostly composed of beige microbes (Figure 3). The rarer colors mentioned above also do not tend to cover much of the plate. Most sites have 7-8 microbe colors (Figure 4). The exception to this is Mill Pond, which has 5 microbe colors on average on each plate.
 
 There are some interesting trends seen in Figure 5. The Left sampling site of Mill Pond has an increase of beige microbes through July to December, but this same trend is not seen in the Right sampling site. Woodman Rd has some spikes of magenta and black microbes on the Right sampling site around July to September. The Left sampling site also has a spike of black microbes around the same time. Durham Reservoir has a decrease of black microbes on the Left sampling site from August to September. On the Right sampling site, there is a slight increase of black microbes from August to October. LaRoche Pond has a high percent coverage of a rarer colored microbe (magenta) in mid-September on the Left sampling site. Thompson Farm, on the Left sampling site, has a high percent coverage of the beige microbes which is not seen again after November. There is also a spike of black microbes at both the sampling sites. The spike on the Left sampling site is around early September while the spike on the Right sampling site is around early October. Upper Mill Pond has a high percent coverage of beige microbes on the Right sampling site. The beige colored microbe started to decline around mid-August. On the Left sampling site, different colored microbes have a low percent coverage, though beige microbes begin to increase around mid-October.
 
