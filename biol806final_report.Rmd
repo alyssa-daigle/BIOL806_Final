@@ -472,7 +472,7 @@ prop_fig
 avg_plate_fig
 ```
 
-Beige, amber, and black are found at each of the locations as seen in Figure 2. Magenta, pink, purple, grey, and green tend to be rarer in general. Plates at each site are mostly composed of beige microbes (Figure 3). The rarer colors mentioned above also do not tend to cover much of the plate. Most sites have 7-8 microbe colors (Figure 4). The exception to this is Mill Pond, which has 5 microbe colors on average on each plate.
+Beige, amber, and black are found at each of the locations as seen in Figure 2. Magenta, pink, purple, grey, and green appear to be rarer in general. Plates at each site are mostly composed of beige microbes (Figure 3). The rarer colors mentioned above also do not tend to cover much of the plate. Most sites have 7-8 microbe colors (Figure 4). The exception to this is Mill Pond, which has 5 microbe colors on average on each plate.
 
 ```{r total microbes figure, fig.cap = "Total number of microbes observed from each plate at each location.", echo=FALSE, include=TRUE}
 location_fig
